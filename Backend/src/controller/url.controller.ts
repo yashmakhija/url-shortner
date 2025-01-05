@@ -60,3 +60,78 @@ export const getUrl = async (req: AuthRequest, res: Response) => {
     return;
   }
 };
+
+export const updateUrl = async (req: Request, res: Response) => {
+  const { shortName, comments } = req.body;
+  const { urlId } = req.params;
+
+  if (!shortName) {
+    res.status(404).json({
+      error: "Short name not found",
+    });
+    return;
+  }
+  try {
+    const urlExist = await prisma.url.findUnique({
+      where: {
+        id: urlId,
+      },
+    });
+
+    if (!urlExist) {
+      res.status(404).json({
+        error: "url not found ",
+      });
+      return;
+    }
+
+    const updateUrl = await prisma.url.updateMany({
+      where: { id: urlExist.id },
+      data: {
+        shortName,
+        comments: comments || null,
+      },
+    });
+
+    res.status(200).json({
+      updateUrl,
+    });
+    return;
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Getting error while updating the url",
+    });
+  }
+};
+
+export const deleteUrl = async (req: Request, res: Response) => {
+  const { urlId } = req.body;
+
+  if (!urlId) {
+    res.status(404).json({
+      error: "url not found",
+    });
+    return;
+  }
+
+  try {
+    const deleteUrl = await prisma.url.delete({
+      where: {
+        id: urlId,
+      },
+    });
+
+    res.status(200).json({
+      status: "Success",
+      deleteUrl,
+    });
+    return;
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Getting issue while deleting the url",
+    });
+    return;
+  }
+};

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUrl = exports.createUrl = void 0;
+exports.deleteUrl = exports.updateUrl = exports.getUrl = exports.createUrl = void 0;
 const prisma_1 = require("../config/prisma");
 const createUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { destinationLink } = req.body;
@@ -68,3 +68,73 @@ const getUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUrl = getUrl;
+const updateUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { shortName, comments } = req.body;
+    const { urlId } = req.params;
+    if (!shortName) {
+        res.status(404).json({
+            error: "Short name not found",
+        });
+        return;
+    }
+    try {
+        const urlExist = yield prisma_1.prisma.url.findUnique({
+            where: {
+                id: urlId,
+            },
+        });
+        if (!urlExist) {
+            res.status(404).json({
+                error: "url not found ",
+            });
+            return;
+        }
+        const updateUrl = yield prisma_1.prisma.url.updateMany({
+            where: { id: urlExist.id },
+            data: {
+                shortName,
+                comments: comments || null,
+            },
+        });
+        res.status(200).json({
+            updateUrl,
+        });
+        return;
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: "Getting error while updating the url",
+        });
+    }
+});
+exports.updateUrl = updateUrl;
+const deleteUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { urlId } = req.body;
+    if (!urlId) {
+        res.status(404).json({
+            error: "url not found",
+        });
+        return;
+    }
+    try {
+        const deleteUrl = yield prisma_1.prisma.url.delete({
+            where: {
+                id: urlId,
+            },
+        });
+        res.status(200).json({
+            status: "Success",
+            deleteUrl,
+        });
+        return;
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: "Getting issue while deleting the url",
+        });
+        return;
+    }
+});
+exports.deleteUrl = deleteUrl;
