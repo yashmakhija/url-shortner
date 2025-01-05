@@ -18,16 +18,21 @@ model User {
   username    String @unique
   email       String @unique
   password    String
-  role        String @default("user")
+  role        Role @default(user)
   plan        String?
   createdAt   DateTime @default(now())
   urls         Url[]
 }
 
+enum Role {
+  admin
+  user
+}
+
 model Url {
-  id              String @id @default(uuid())
+  id              String @id @default(nanoid())
   destinationLink String
-  shortName       String @unique
+  shortName       String? @unique
   comments        String?
   tags            String?
   clicks          Int @default(0)

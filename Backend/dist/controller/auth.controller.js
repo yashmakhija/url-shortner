@@ -56,7 +56,6 @@ const signUp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             msg: "User Created Succesfully",
             id: createUser.id,
             username: createUser.username,
-            password: createUser.password,
         });
     }
     catch (err) {
