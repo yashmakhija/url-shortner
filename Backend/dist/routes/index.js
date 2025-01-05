@@ -3,8 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __importDefault(require("./app"));
-const PORT = process.env.PORT || 3901;
-app_1.default.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+exports.authRoutes = void 0;
+const auth_routes_1 = __importDefault(require("./auth.routes"));
+exports.authRoutes = auth_routes_1.default;
