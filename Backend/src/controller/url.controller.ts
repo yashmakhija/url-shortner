@@ -51,6 +51,7 @@ export const createUrl = async (req: AuthRequest, res: Response) => {
 
 export const getUrl = async (req: AuthRequest, res: Response) => {
   const user = req.user as { id: number };
+  console.log(user.id);
 
   try {
     const userUrl = await prisma.user.findMany({

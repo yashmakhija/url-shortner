@@ -54,6 +54,7 @@ const createUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.createUrl = createUrl;
 const getUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
+    console.log(user.id);
     try {
         const userUrl = yield prisma_1.prisma.user.findMany({
             select: {
@@ -66,18 +67,9 @@ const getUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 id: user.id,
             },
         });
-        const url = yield prisma_1.prisma.url.findMany({
-            select: {
-                shortUrl: true,
-            },
-            where: {
-                userId: user.id,
-            },
-        });
         res.status(200).json({
             status: "Success",
-            // userUrl,
-            url: `${baseUrl}/api/url/${url}`,
+            userUrl,
         });
         return;
     }
