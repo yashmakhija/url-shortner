@@ -158,18 +158,25 @@ export const deleteUrl = async (req: Request, res: Response) => {
 export const redirectUrl = async (req: Request, res: Response) => {
   const { urlId } = req.params;
 
+  let clicks = 0;
+
   if (!urlId) {
     res.status(404).json({
       error: "url not found",
     });
     return;
   }
+
   try {
-    const urlExist = await prisma.url.findUnique({
+    const urlExist = await prisma.url.update({
       where: {
         shortUrl: urlId,
       },
+      data: {
+        clicks: { increment: clicks },
+      },
     });
+
     if (!urlExist) {
       res.status(404).json({
         error: "The requested URL does not exist.",

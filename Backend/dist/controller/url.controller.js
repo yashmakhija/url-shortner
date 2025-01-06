@@ -154,6 +154,8 @@ const deleteUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.deleteUrl = deleteUrl;
 const redirectUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { urlId } = req.params;
+    let clicks = 0;
+    clicks = clicks + 1;
     if (!urlId) {
         res.status(404).json({
             error: "url not found",
@@ -161,9 +163,12 @@ const redirectUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         return;
     }
     try {
-        const urlExist = yield prisma_1.prisma.url.findUnique({
+        const urlExist = yield prisma_1.prisma.url.update({
             where: {
                 shortUrl: urlId,
+            },
+            data: {
+                clicks: { increment: clicks },
             },
         });
         if (!urlExist) {

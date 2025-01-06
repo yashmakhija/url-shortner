@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signIn = exports.signUp = void 0;
+exports.verify = exports.signIn = exports.signUp = void 0;
 const prisma_1 = require("../config/prisma");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -111,3 +111,45 @@ const signIn = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.signIn = signIn;
+const verify = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!userId) {
+            res.status(404).json({
+                error: "Invalid token",
+            });
+            return;
+        }
+        const user = yield prisma_1.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                role: true,
+                plan: true,
+            },
+        });
+        if (!user) {
+            res.status(404).json({
+                error: "user not found",
+            });
+            return;
+        }
+        res.status(200).json({
+            status: "Success",
+            valid: true,
+            user,
+        });
+        return;
+    }
+    catch (err) {
+        console.error(err);
+        res.status(404).json({
+            error: "something went wrong while verifying",
+        });
+        return;
+    }
+});
+exports.verify = verify;

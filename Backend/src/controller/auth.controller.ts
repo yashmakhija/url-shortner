@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import { AuthRequest } from "../types/auth-request";
 
 require("dotenv").config();
 
@@ -96,7 +97,7 @@ export const signIn = async (req: Request, res: Response) => {
         id: user.id,
         role: user.role,
       },
-      jwtSecret
+      jwtSecret,
     );
 
     res.status(200).json({
@@ -107,6 +108,50 @@ export const signIn = async (req: Request, res: Response) => {
     console.error("Getting issue while login", err);
     res.status(500).json({
       error: "something went wrong with login",
+    });
+    return;
+  }
+};
+
+export const verify = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(404).json({
+        error: "Invalid token",
+      });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        plan: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        error: "user not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      status: "Success",
+      valid: true,
+      user,
+    });
+    return;
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({
+      error: "something went wrong while verifying",
     });
     return;
   }
