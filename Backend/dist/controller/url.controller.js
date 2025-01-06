@@ -9,32 +9,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUrl = exports.updateUrl = exports.getUrl = exports.createUrl = void 0;
+exports.redirectUrl = exports.deleteUrl = exports.updateUrl = exports.getUrl = exports.createUrl = void 0;
 const prisma_1 = require("../config/prisma");
+const baseUrl = process.env.baseUrl || "http://localhost:3901";
 const createUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { destinationLink } = req.body;
     const user = req.user;
-    if (!destinationLink) {
+    if (!destinationLink || !destinationLink.startsWith("https://")) {
         res.status(404).json({
-            error: "Destination url not found",
+            error: "Make sure url starts with https://",
         });
         return;
+    }
+    let shortUrl = "";
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < 5) {
+        shortUrl += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
     }
     try {
         const url = yield prisma_1.prisma.url.create({
             data: {
                 destinationLink,
                 userId: user.id,
+                shortUrl,
             },
         });
         res.status(200).json({
             status: "Success",
-            url,
+            shortUrl: `${baseUrl}/api/url/${url.shortUrl}`,
         });
         return;
     }
     catch (err) {
-        console.error("error while creatign the url shortner", err);
+        console.error("error while creating the url shortner", err);
         res.status(500).json({
             error: "error while creating the url",
         });
@@ -46,16 +56,28 @@ const getUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
     try {
         const userUrl = yield prisma_1.prisma.user.findMany({
+            select: {
+                username: true,
+                role: true,
+                plan: true,
+                urls: true,
+            },
             where: {
                 id: user.id,
             },
-            include: {
-                urls: true,
+        });
+        const url = yield prisma_1.prisma.url.findMany({
+            select: {
+                shortUrl: true,
+            },
+            where: {
+                userId: user.id,
             },
         });
         res.status(200).json({
             status: "Success",
-            userUrl,
+            // userUrl,
+            url: `${baseUrl}/api/url/${url}`,
         });
         return;
     }
@@ -80,7 +102,7 @@ const updateUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const urlExist = yield prisma_1.prisma.url.findUnique({
             where: {
-                id: urlId,
+                shortUrl: urlId,
             },
         });
         if (!urlExist) {
@@ -120,7 +142,7 @@ const deleteUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const deleteUrl = yield prisma_1.prisma.url.delete({
             where: {
-                id: urlId,
+                shortUrl: urlId,
             },
         });
         res.status(200).json({
@@ -138,3 +160,35 @@ const deleteUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.deleteUrl = deleteUrl;
+const redirectUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { urlId } = req.params;
+    if (!urlId) {
+        res.status(404).json({
+            error: "url not found",
+        });
+        return;
+    }
+    try {
+        const urlExist = yield prisma_1.prisma.url.findUnique({
+            where: {
+                shortUrl: urlId,
+            },
+        });
+        if (!urlExist) {
+            res.status(404).json({
+                error: "The requested URL does not exist.",
+            });
+            return;
+        }
+        const url = urlExist.destinationLink;
+        res.status(308).redirect(url);
+        return;
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: "error while redirecting the url",
+        });
+    }
+});
+exports.redirectUrl = redirectUrl;

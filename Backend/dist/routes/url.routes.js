@@ -11,4 +11,5 @@ router.post("/create", middleware_1.requireAuth, controller_1.UrlController.crea
 router.get("/get", middleware_1.requireAuth, controller_1.UrlController.getUrl);
 router.put("/update/:urlId", middleware_1.requireAuth, controller_1.UrlController.updateUrl);
 router.delete("/delete", middleware_1.requireAuth, controller_1.UrlController.deleteUrl);
+router.get("/:urlId", controller_1.UrlController.redirectUrl);
 exports.default = router;

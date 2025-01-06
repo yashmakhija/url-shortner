@@ -2,15 +2,28 @@ import { Request, Response } from "express";
 import { AuthRequest } from "../types/auth-request";
 import { prisma } from "../config/prisma";
 
+const baseUrl = process.env.baseUrl || "http://localhost:3901";
+
 export const createUrl = async (req: AuthRequest, res: Response) => {
   const { destinationLink } = req.body;
   const user = req.user as { id: number };
 
-  if (!destinationLink) {
+  if (!destinationLink || !destinationLink.startsWith("https://")) {
     res.status(404).json({
-      error: "Destination url not found",
+      error: "Make sure url starts with https://",
     });
     return;
+  }
+  let shortUrl = "";
+
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const charactersLength = characters.length;
+
+  let counter = 0;
+  while (counter < 5) {
+    shortUrl += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
   }
 
   try {
@@ -18,15 +31,17 @@ export const createUrl = async (req: AuthRequest, res: Response) => {
       data: {
         destinationLink,
         userId: user.id,
+        shortUrl,
       },
     });
     res.status(200).json({
       status: "Success",
-      url,
+      shortUrl: `${baseUrl}/api/url/${url.shortUrl}`,
     });
+
     return;
   } catch (err) {
-    console.error("error while creatign the url shortner", err);
+    console.error("error while creating the url shortner", err);
     res.status(500).json({
       error: "error while creating the url",
     });
@@ -39,11 +54,14 @@ export const getUrl = async (req: AuthRequest, res: Response) => {
 
   try {
     const userUrl = await prisma.user.findMany({
+      select: {
+        username: true,
+        role: true,
+        plan: true,
+        urls: true,
+      },
       where: {
         id: user.id,
-      },
-      include: {
-        urls: true,
       },
     });
 
@@ -74,7 +92,7 @@ export const updateUrl = async (req: Request, res: Response) => {
   try {
     const urlExist = await prisma.url.findUnique({
       where: {
-        id: urlId,
+        shortUrl: urlId,
       },
     });
 
@@ -118,7 +136,7 @@ export const deleteUrl = async (req: Request, res: Response) => {
   try {
     const deleteUrl = await prisma.url.delete({
       where: {
-        id: urlId,
+        shortUrl: urlId,
       },
     });
 
@@ -133,5 +151,39 @@ export const deleteUrl = async (req: Request, res: Response) => {
       error: "Getting issue while deleting the url",
     });
     return;
+  }
+};
+
+export const redirectUrl = async (req: Request, res: Response) => {
+  const { urlId } = req.params;
+
+  if (!urlId) {
+    res.status(404).json({
+      error: "url not found",
+    });
+    return;
+  }
+  try {
+    const urlExist = await prisma.url.findUnique({
+      where: {
+        shortUrl: urlId,
+      },
+    });
+    if (!urlExist) {
+      res.status(404).json({
+        error: "The requested URL does not exist.",
+      });
+      return;
+    }
+
+    const url = urlExist.destinationLink;
+
+    res.status(308).redirect(url);
+    return;
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "error while redirecting the url",
+    });
   }
 };

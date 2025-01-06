@@ -19,7 +19,7 @@ model User {
   email       String @unique
   password    String
   role        Role @default(user)
-  plan        String?
+  plan        Plan? @default(free)
   createdAt   DateTime @default(now())
   urls         Url[]
 }
@@ -29,9 +29,15 @@ enum Role {
   user
 }
 
+enum Plan {
+  free
+  premium
+}
+
 model Url {
   id              String @id @default(nanoid())
   destinationLink String
+  shortUrl        String? @unique
   shortName       String? @unique
   comments        String?
   tags            String?
