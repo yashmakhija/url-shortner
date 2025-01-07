@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../types/auth-request";
 import { prisma } from "../config/prisma";
+import { GuestRequest } from "../middleware/guest";
 
 const baseUrl = process.env.baseUrl || "http://localhost:3901";
 
@@ -193,5 +194,59 @@ export const redirectUrl = async (req: Request, res: Response) => {
     res.status(500).json({
       error: "error while redirecting the url",
     });
+  }
+};
+
+export const guestUrl = async (req: GuestRequest, res: Response) => {
+  const { destinationLink } = req.body;
+  const guestId = req.guestId;
+
+  if (!destinationLink) {
+    res.status(404).json({
+      error: "Please enter valid url",
+    });
+    return;
+  }
+
+  let shortUrl = "";
+
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const charactersLength = characters.length;
+
+  let counter = 0;
+  while (counter < 5) {
+    shortUrl += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+
+  const expireAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
+
+  try {
+    const createUrl = await prisma.url.create({
+      data: {
+        destinationLink,
+        shortUrl,
+        guestId,
+        expireAt,
+      },
+      select: {
+        destinationLink: true,
+        shortUrl: true,
+        createdAt: true,
+        clicks: true,
+        expireAt: true,
+      },
+    });
+
+    res.status(200).json({
+      status: "Success",
+      shortUrl: `${baseUrl}/api/url/${createUrl.shortUrl}`,
+      createUrl,
+    });
+    return;
+  } catch (err) {
+    console.error("Something went wrong while create url", err);
+    return;
   }
 };

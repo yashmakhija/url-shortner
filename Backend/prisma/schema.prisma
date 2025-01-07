@@ -14,14 +14,14 @@ datasource db {
 }
 
 model User {
-  id          Int @id @default(autoincrement())
-  username    String @unique
-  email       String @unique
-  password    String
-  role        Role @default(user)
-  plan        Plan? @default(free)
-  createdAt   DateTime @default(now())
-  urls         Url[]
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      Role     @default(user)
+  plan      Plan?    @default(free)
+  createdAt DateTime @default(now())
+  urls      Url[]
 }
 
 enum Role {
@@ -35,17 +35,18 @@ enum Plan {
 }
 
 model Url {
-  id              String @id @default(nanoid())
+  id              String    @id @default(nanoid())
   destinationLink String
-  shortUrl        String? @unique
-  shortName       String? @unique
+  shortUrl        String?   @unique
+  shortName       String?   @unique
   comments        String?
   tags            String?
-  clicks          Int @default(0)
+  clicks          Int       @default(0)
   expireAt        DateTime?
-  createdAt       DateTime @default(now())
-  lastAccessed    DateTime? 
-  status          String @default("active")
-  userId          Int
-  user User @relation(fields: [userId], references: [id])
+  createdAt       DateTime  @default(now())
+  lastAccessed    DateTime?
+  status          String    @default("active")
+  userId          Int?
+  guestId         String?
+  user            User?      @relation(fields: [userId], references: [id])
 }
